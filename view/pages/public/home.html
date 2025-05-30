@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>用户管理系统</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body class="bg-gray-100">
+<!-- 导航栏 -->
+<nav class="bg-blue-500 p-4 text-white">
+  <div class="container mx-auto flex justify-between items-center">
+    <a href="#" class="text-xl font-semibold">用户管理</a>
+    <div class="flex items-center space-x-4">
+      <!-- 新增当前用户显示 -->
+      <div class="flex items-center text-sm">
+        <i class="fas fa-user-circle mr-2"></i>
+        <span>当前登录: {{.CurUser.Account}}</span>
+      </div>
+      <a href="#" class="hover:text-blue-200">首页</a>
+      <a href="#" class="hover:text-blue-200">设置</a>
+      <a href="/logout" class="hover:text-blue-200">退出当前登录</a>
+      <a href="/user/personalHomePage" class="hover:text-blue-200">个人主页</a>
+    </div>
+  </div>
+</nav>
+<!-- 主内容区域 -->
+<div class="container mx-auto mt-8">
+  <!-- 用户列表 -->
+  <div class="bg-white shadow-md rounded my-6">
+    <table class="min-w-max w-full table-auto">
+      <thead>
+      <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+        <th class="py-3 px-6 text-left">ID</th>
+        <th class="py-3 px-6 text-left">用户名</th>
+        <th class="py-3 px-6 text-center">角色</th>
+        <th class="py-3 px-6 text-center">操作</th>
+      </tr>
+      </thead>
+      <tbody class="text-gray-600 text-sm font-light">
+      {{range .UserList}}
+      <tr class="border-b border-gray-200 hover:bg-gray-100" data-user-id="{{.Id}}">
+        <td class="py-3 px-6 text-left whitespace-nowrap">
+          <div class="flex items-center">
+            <span class="font-medium">{{.Id}}</span>
+          </div>
+        </td>
+
+        <td class="py-3 px-6 text-left">
+          <div class="flex items-center">
+            <span>{{.Account}}</span>
+          </div>
+        </td>
+        <td class="py-3 px-6 text-center">
+          <span class="bg-purple-200 text-purple-600 py-1 px-3 rounded-full text-xs">{{if .Role}}管理员{{else}}普通用户{{end}} </span>
+        </td>
+        <td class="py-3 px-6 text-center">
+          <div class="flex items-center justify-center space-x-2">
+            <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-xs"
+                    {{ if not $.CurserRole }}style="pointer-events: none;"{{ end }}
+                    onclick="if ({{$.CurserRole}}) { handleEditClick('{{.Id}}'); } else { alert('普通用户无权编辑'); }">
+              编辑
+            </button>
+            <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded text-xs"
+                    {{ if not $.CurserRole }}style="pointer-events: none;"{{ end }}
+                    onclick="if ({{$.CurserRole}}) { deleteUser('{{.Id}}'); } else { alert('普通用户无权删除'); }">
+              删除
+            </button>
+          </div>
+        </td>
+      </tr>
+      {{end}}
+      <!-- 更多用户行 -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 添加用户按钮 -->
+  <!--  <div class="flex justify-end">-->
+  <!--    <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">-->
+  <!--      删除用户-->
+  <!--    </button>-->
+  <!--  </div>-->
+</div>
+
+<!-- 管理员进行用户信息编辑 -->
+<div id="adminEditModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center hidden">
+  <div class="bg-white rounded-lg p-6 w-full max-w-md">
+    <h3 class="text-xl font-semibold mb-4">编辑用户信息</h3>
+    <form id="adminEditForm" action="/edit-user" method="post" class="space-y-4">
+      <div>
+        <label class="block text-gray-700 mb-2">用户账号</label>
+        <input type="text" id="editUsername" name="newAccount" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div>
+        <label class="block text-gray-700 mb-2">用户密码</label>
+        <input type="text" id="editPassword" name="newPassword" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div class="flex justify-end gap-3">
+        <button type="button" id="closeEditModal" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+          取消
+        </button>
+        <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+          保存
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+</body>
+</html>
+
+
+
+<!-- 用ajax请求返回id完成删除操作-->
+<script>
+  function deleteUser(userId) {
+    //const userId = $("#deleteId").val(); // 获取要删除的ID
+    console.log(userId,"-----")
+
+    // 通过 data-user-id 属性找到对应的行
+    const row = document.querySelector(`tr[data-user-id="${userId}"]`);
+    if (!row) {
+      alert('未找到对应的用户行！');
+      return;
+    }
+
+    var formData = new FormData();
+    formData.append('id', userId);
+    $.ajax({
+      type: "POST",
+      url: "/user/delete",  // 建议改成真正的删除接口如"/user/delete"
+      data: formData,
+      processData: false, // 告诉 jQuery 不要对数据进行处理
+      contentType: false, // 告诉 jQuery 不要设置 contentType
+      success: function(response) {
+        console.log("后端响应"+response);
+        console.log("ddddddddddddddddddddddddddddddd");
+        console.log("response 类型:", typeof response); // 检查是否为 object
+        if (response.success && response) {
+          console.log("删除成功");
+          // 添加删除动画：渐变透明度后移除元素
+          row.style.transition = 'opacity 0.5s';
+          row.style.opacity = '0';
+          setTimeout(() => row.remove(), 500);
+          location.reload();
+          alert("删除成功")
+
+        } else {
+          // const message = response?.message || "未知错误";
+          console.log(response.message);
+          alert("删除失败: " + response.message);
+        }
+      },
+      error: function(xhr) {
+        let errorMessage = "请求失败";
+        try {
+          const response = JSON.parse(xhr.responseText);
+          errorMessage += `: ${response.message || response.code}`;
+        } catch (e) {
+          errorMessage += `，状态码: ${xhr.status}`;
+        }
+        console.log(errorMessage);
+        alert(errorMessage);
+      }
+    });
+  }
+</script>
+
+<!--用ajax实现点击编辑将id传过去-->
+<script>
+  function handleEditClick(userId) {
+    // 显示编辑模态框
+    $('#adminEditModal').removeClass('hidden');
+
+    // 获取当前行的用户信息
+    const row = document.querySelector(`tr[data-user-id="${userId}"]`);
+    if (!row) {
+      alert('未找到对应的用户行！');
+      return;
+    }
+
+    // 获取当前行的用户名
+    const username = row.querySelector('td:nth-child(2) span').textContent;
+
+
+    // 填充表单
+    $('#editUsername').val(username);
+    {{range .UserList}}
+    $('#editPassword').val({{.Password}});// 密码字段留空
+    {{end}}
+
+    // 保存当前编辑的用户ID
+    $('#adminEditForm').data('userId', userId);
+  }
+
+  // 关闭编辑模态框
+  $('#closeEditModal').click(function() {
+    $('#adminEditModal').addClass('hidden');
+  });
+
+  // 处理编辑表单提交
+  $('#adminEditForm').submit(function(e) {
+    e.preventDefault();
+
+    const userId = $(this).data('userId');
+    const newAccount = document.getElementById('editUsername').value;
+    const passWord = document.getElementById('editPassword').value;
+    var formData = new FormData(this);
+    formData.append('id', userId);
+    // formData.append('newAccount', newAccount);
+    // formData.append('password', password);
+    const params = new URLSearchParams({
+      id : userId,
+      newAccount: newAccount,
+      password: passWord,
+    });
+    console.log(formData);
+    $.ajax({
+      method: "POST",
+      url: `/edit-user?${params.toString()}`,
+      data: formData,
+      processData: false,
+      contentType: false,
+      headers: false,
+      success: function(response) {
+        if (response.success) {
+          alert('用户信息修改成功');
+          $('#adminEditModal').addClass('hidden');
+          location.reload(); // 刷新页面以显示更新后的信息
+        } else {
+          alert('修改失败: ' + (response.message || '未知错误'));
+        }
+      },
+      error: function(xhr) {
+        let errorMessage = "请求失败";
+        try {
+          const response = JSON.parse(xhr.responseText);
+          errorMessage += `: ${response.message || response.code}`;
+        } catch (e) {
+          errorMessage += `，状态码: ${xhr.status}`;
+        }
+        alert(errorMessage);
+      }
+    });
+  });
+</script>

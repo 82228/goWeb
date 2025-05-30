@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>个人信息编辑</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@heroicons/v2/24/outline/index.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+<div class="bg-white rounded-2xl shadow-lg w-full max-w-md p-6 space-y-6">
+  <!-- 头像上传独立表单 -->
+  <form id="avatarForm" class="flex flex-col items-center"
+        action="/user/editMess"
+        method="POST"
+        enctype="multipart/form-data">
+    <label class="cursor-pointer group">
+      <input type="file" class="hidden" accept="image/*" name="avatar" id="avatarInput">
+      <div class="relative">
+        <img src="{{.AvatarURL}}"
+             id="avatarPreview"
+             class="w-24 h-24 rounded-full border-4 border-white shadow-lg group-hover:border-blue-100 transition-colors">
+        <div class="absolute inset-0 bg-black bg-opacity-40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2">
+            <use href="#camera" />
+          </svg>
+        </div>
+      </div>
+      <span class="block text-center text-blue-600 text-sm mt-2 hover:text-blue-700 transition-colors">
+        点击更换头像
+      </span>
+    </label>
+  </form>
+
+  <!-- 个人信息独立表单 -->
+  <form id="profileForm" class="space-y-6">
+    <div class="space-y-4">
+      <!-- 用户名 -->
+      <div>
+        <label class="flex items-center text-gray-700 mb-2">
+          <svg class="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" stroke-width="1.5">
+            <use href="#user" />
+          </svg>
+          用户名/账号
+        </label>
+        <input type="text" name="username"
+               value="{{.UserName}}"
+               class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+
+      <!-- 性别 -->
+      <div>
+        <label class="flex items-center text-gray-700 mb-2">
+          <svg class="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" stroke-width="1.5">
+            <use href="#user" />
+          </svg>
+          性别
+        </label>
+        <select name="gender" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="female" {{if eq .Gender "female"}}selected{{end}}>女性</option>
+          <option value="male" {{if eq .Gender "male"}}selected{{end}}>男性</option>
+          <option value="other" {{if eq .Gender "other"}}selected{{end}}>其他</option>
+        </select>
+      </div>
+
+      <!-- 生日 -->
+      <div>
+        <label class="flex items-center text-gray-700 mb-2">
+          <svg class="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" stroke-width="1.5">
+            <use href="#user" />
+          </svg>
+          生日
+        </label>
+        <input type="date" name="birthday"
+               value="{{.Birthday}}"
+               class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+
+      <!-- 身份 -->
+<!--      <div>-->
+<!--        <label class="flex items-center text-gray-700 mb-2">-->
+<!--          <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" stroke-width="1.5">-->
+<!--            <use href="#badge-check" />-->
+<!--          </svg>-->
+<!--          身份-->
+<!--        </label>-->
+<!--        <select name="role" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">-->
+<!--          <option value="admin">管理员</option>-->
+<!--          <option value="user">普通用户</option>-->
+<!--        </select>-->
+<!--      </div>-->
+
+      <!-- 住址 -->
+      <div>
+        <label class="flex items-center text-gray-700 mb-2">
+          <svg class="w-5 h-5 text-orange-500 mr-2" fill="none" stroke="currentColor" stroke-width="1.5">
+            <use href="#map-pin" />
+          </svg>
+          住址
+        </label>
+        <div class="grid grid-cols-2 gap-3">
+          <input type="text" name="province"
+                 value="{{.Province}}"
+                 class="col-span-2 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                 placeholder="省份">
+          <input type="text" name="city"
+                 value="{{.City}}"
+                 class="col-span-2 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                 placeholder="市">
+          <input type="text" name="address"
+                 value="{{.Address}}"
+                 class="col-span-2 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                 placeholder="详细地址">
+        </div>
+      </div>
+    </div>
+
+    <!-- 操作按钮 -->
+    <div class="flex flex-col gap-3">
+      <div class="flex gap-3">
+        <button type="button" id="resetBtn"
+                class="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+          重置
+        </button>
+        <button id="formSubmit" type="button">
+          保存更改
+        </button>
+      </div>
+    </div>
+  </form>
+
+  <!-- Heroicons 定义 -->
+  <svg xmlns="http://www.w3.org/2000/svg" class="hidden">
+    <symbol id="camera">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/>
+      <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"/>
+    </symbol>
+    <symbol id="user">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
+    </symbol>
+    <symbol id="cake"><!-- ... --></symbol>
+    <symbol id="badge-check"><!-- ... --></symbol>
+    <symbol id="map-pin"><!-- ... --></symbol>
+  </svg>
+</div>
+
+
+
+<script>
+  $('#formSubmit').on('click', function () {
+    console.log(1111111111)
+    event.preventDefault();
+    /*
+    提交表单
+     */
+    // 获取表单数据
+    var formData = $('#profileForm').serialize();
+    console.log(formData, "------");
+    // ajax提交数据
+    $.ajax({
+      url: '/user/profile',
+      type: 'POST',
+      data: formData,
+      success: function (data) {
+        window.location.href = '/user/saveChanges'
+      }
+    })
+  })
+
+  // 头像处理（保持原样）
+  $('#avatarInput').change(function(e) {
+    let file = e.target.files[0];
+    file.name = "avatar";
+    if (!file) {
+      return;
+    }
+
+    // 预览
+    const reader = new FileReader();
+    reader.onload = e => $('#avatarPreview').attr('src', e.target.result);
+    reader.readAsDataURL(file);
+
+
+    // 提交
+    submitAvatar(file);
+  });
+
+  function submitAvatar(file) {
+
+    const formData = new FormData();
+    formData.append("avatar", file);
+
+    console.log("formdata", formData);
+    $.ajax({
+      url: "/user/editMess",
+      type: 'POST',
+      data: formData,
+      processData: false,
+      contentType: false,
+      success: function(response) {
+        console.log("------------------")
+        if (response.success) {
+          $('#avatarPreview').attr('src', response.avatar_url + '?t=' + Date.now());
+          showAlert('头像更新成功', 'success');
+        }
+      },
+      error: function(response) {
+        console.log("------------------")
+      }
+    });
+  }
+
+  // 其他辅助函数保持不变
+</script>
+</body>
+</html>
