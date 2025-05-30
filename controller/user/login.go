@@ -39,6 +39,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 		// 交给service层处理
 		//service.Check(u)
+		//
 		if !service.CheckAccountFormat(u.Account) {
 			data := param.LoginPageData{"账号格式不正确"}
 			err := t.Execute(w, data)
