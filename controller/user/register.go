@@ -42,6 +42,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 			data := param.RegisterPageData{"账号格式不正确"}
 			err := t.Execute(w, data)
 			if err != nil {
+
 				return
 			}
 			return
