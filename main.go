@@ -1,5 +1,6 @@
 package main
 
+<<<<<<< HEAD
 import (
 	"net/http"
 	file2 "webb/controller/file"
@@ -34,4 +35,10 @@ func main() {
 	if err != nil {
 		return
 	}
+=======
+import "fmt"
+
+func main() {
+	fmt.Println("hello world")
+>>>>>>> f78aa12bb4c6400a2b3611c6784d23683e92a462
 }
